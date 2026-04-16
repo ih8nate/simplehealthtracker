@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --surface3: #222d42;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --accent-light: rgba(59,130,246,0.13);
+    --accent-glow: rgba(59,130,246,0.25);
+    --text: #e8f0fe;
+    --muted: #6b7fa8;
+    --green: #34d399;
+    --green-bg: rgba(52,211,153,0.1);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.1);
+    --radius: 16px;
+    --graph-line: #3b82f6;
+    --graph-fill-top: rgba(59,130,246,0.35);
+    --graph-fill-bot: rgba(59,130,246,0.0);
+    --graph-dot: #60a5fa;
+    --graph-grid: rgba(255,255,255,0.05);
+  }
+
+  [data-theme="light"] {
+    --bg: #f0f4ff;
+    --surface: #ffffff;
+    --surface2: #eaf0ff;
+    --surface3: #dce6ff;
+    --border: rgba(0,0,0,0.07);
+    --border2: rgba(0,0,0,0.13);
+    --accent: #2563eb;
+    --accent2: #3b82f6;
+    --accent-light: rgba(37,99,235,0.1);
+    --accent-glow: rgba(37,99,235,0.15);
+    --text: #0f172a;
+    --muted: #64748b;
+    --green: #059669;
+    --green-bg: rgba(5,150,105,0.1);
+    --red: #dc2626;
+    --red-bg: rgba(220,38,38,0.1);
+    --graph-line: #2563eb;
+    --graph-fill-top: rgba(37,99,235,0.2);
+    --graph-fill-bot: rgba(37,99,235,0.0);
+    --graph-dot: #2563eb;
+    --graph-grid: rgba(0,0,0,0.06);
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+    padding: 2rem 1.5rem 5rem;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    max-width: 860px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .app-title-group .greeting {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .app-title-group h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .date-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* THEME TOGGLE */
+  .theme-toggle { display: flex; align-items: center; gap: 8px; }
+  .theme-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .toggle-track {
+    width: 42px; height: 23px;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.25s;
+  }
+  .toggle-track.light-on { background: var(--accent); border-color: var(--accent); }
+  .toggle-thumb {
+    width: 17px; height: 17px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px; left: 2px;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .toggle-track.light-on .toggle-thumb { transform: translateX(19px); }
+
+  /* ── MAIN CONTENT ── */
+  .main { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.75rem; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem 0;
+    margin-bottom: 1rem;
+  }
+
+  .card-title-group { display: flex; flex-direction: column; gap: 2px; }
+
+  .card-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    margin-top: 1px;
+  }
+
+  /* ── WEIGHT GRAPH ── */
+  .graph-wrap {
+    padding: 0 1.5rem 1.25rem;
+    position: relative;
+  }
+
+  .graph-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .g-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .g-stat-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .g-stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  .g-stat-val.up { color: var(--red); }
+  .g-stat-val.down { color: var(--green); }
+  .g-stat-val.neutral { color: var(--accent2); }
+
+  .graph-container {
+    width: 100%;
+    height: 200px;
+    position: relative;
+  }
+
+  canvas#weightChart {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
+  .graph-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .graph-empty .icon { font-size: 28px; opacity: 0.4; }
+
+  /* ADD WEIGHT FORM */
+  .add-weight-form {
+    display: flex;
+    gap: 8px;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+  .form-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+
+  .form-input {
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 9px 12px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s, background 0.3s;
+    width: 100%;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--muted); font-weight: 500; }
+
+  .btn-add {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    border-radius: 10px;
+    padding: 9px 20px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    white-space: nowrap;
+    align-self: flex-end;
+    letter-spacing: 0.03em;
+  }
+  .btn-add:hover { opacity: 0.88; }
+  .btn-add:active { transform: scale(0.97); }
+
+  /* WEIGHT LOG LIST */
+  .weight-log {
+    border-top: 1px solid var(--border);
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .weight-log::-webkit-scrollbar { width: 3px; }
+  .weight-log::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  .weight-entry {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 1.5rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+  .weight-entry:last-child { border-bottom: none; }
+  .weight-entry:hover { background: var(--surface2); }
+
+  .we-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 90px;
+    font-weight: 400;
+  }
+
+  .we-weight {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .we-change {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .we-change.up { background: var(--red-bg); color: var(--red); }
+  .we-change.down { background: var(--green-bg); color: var(--green); }
+  .we-change.same { background: var(--accent-light); color: var(--accent2); }
+
+  .we-del {
+    background: none; border: none; color: var(--muted);
+    font-size: 15px; cursor: pointer; opacity: 0;
+    transition: opacity 0.12s, color 0.12s; padding: 0 2px;
+  }
+  .weight-entry:hover .we-del { opacity: 1; }
+  .we-del:hover { color: var(--red); }
+
+  /* ── MED TRACKER ── */
+  .med-add-form {
+    display: flex;
+    gap: 8px;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .med-list { overflow: hidden; }
+
+  .med-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 1.5rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+  .med-item:last-child { border-bottom: none; }
+  .med-item:hover { background: var(--surface2); }
+
+  .med-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .med-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1.5;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  .med-dose {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent2);
+    background: var(--accent-light);
+    border-radius: 8px;
+    padding: 3px 10px;
+    flex-shrink: 0;
+  }
+
+  .med-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 90px;
+    text-align: right;
+  }
+
+  .med-del {
+    background: none; border: none; color: var(--muted);
+    font-size: 15px; cursor: pointer; opacity: 0;
+    transition: opacity 0.12s, color 0.12s; padding: 0 2px;
+  }
+  .med-item:hover .med-del { opacity: 1; }
+  .med-del:hover { color: var(--red); }
+
+  .empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+    font-style: italic;
+  }
+
+  .section-toggle-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 1rem 1.5rem 0.5rem;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .section-toggle-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex: 1;
+  }
+
+  .section-chevron {
+    color: var(--muted);
+    font-size: 11px;
+    transition: transform 0.2s;
+  }
+  .section-chevron.collapsed { transform: rotate(-90deg); }
+
+  .collapsible { transition: all 0.2s; }
+  .collapsible.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title-group">
+    <p class="greeting">Welcome back 👋</p>
+    <h1>Health Tracker</h1>
+    <p class="date-line" id="date-line"></p>
+  </div>
+  <div class="theme-toggle">
+    <span class="theme-label" id="theme-label">Dark</span>
+    <div class="toggle-track" id="toggle-track" onclick="toggleTheme()">
+      <div class="toggle-thumb"></div>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- WEIGHT CARD -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title-group">
+        <span class="card-label">📈 Tracking</span>
+        <span class="card-title">Weight Over Time</span>
+        <span class="card-subtitle" id="weight-range-label">No entries yet</span>
+      </div>
+    </div>
+    <div class="graph-wrap">
+      <div class="graph-stats" id="graph-stats" style="display:none">
+        <div class="g-stat">
+          <span class="g-stat-val neutral" id="stat-current">—</span>
+          <span class="g-stat-label">Current</span>
+        </div>
+        <div class="g-stat">
+          <span class="g-stat-val" id="stat-start">—</span>
+          <span class="g-stat-label">Starting</span>
+        </div>
+        <div class="g-stat">
+          <span class="g-stat-val" id="stat-change">—</span>
+          <span class="g-stat-label">Total Change</span>
+        </div>
+        <div class="g-stat">
+          <span class="g-stat-val neutral" id="stat-entries">—</span>
+          <span class="g-stat-label">Entries</span>
+        </div>
+      </div>
+      <div class="graph-container">
+        <canvas id="weightChart"></canvas>
+        <div class="graph-empty" id="graph-empty">
+          <span class="icon">⚖️</span>
+          <span>Add your first weight entry below</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD WEIGHT -->
+    <div class="add-weight-form">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" id="w-date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Weight (lbs)</label>
+        <input class="form-input" type="number" id="w-weight" placeholder="e.g. 145.5" step="0.1" min="50" max="700" />
+      </div>
+      <button class="btn-add" onclick="addWeight()">+ Add</button>
+    </div>
+
+    <!-- LOG TOGGLE -->
+    <div class="section-toggle-header" onclick="toggleLog()">
+      <span class="section-toggle-label">Entry Log</span>
+      <span class="section-chevron" id="log-chevron">▼</span>
+    </div>
+    <div class="collapsible" id="weight-log-wrap">
+      <div class="weight-log" id="weight-log">
+        <div class="empty-state">No entries yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MED TRACKER CARD -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title-group">
+        <span class="card-label">💊 Medications</span>
+        <span class="card-title">Medication Tracker</span>
+        <span class="card-subtitle" id="med-count-label">No medications logged</span>
+      </div>
+    </div>
+
+    <div class="med-add-form">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" id="m-date" />
+      </div>
+      <div class="form-group" style="flex:2">
+        <label class="form-label">Medication Name</label>
+        <input class="form-input" type="text" id="m-name" placeholder="e.g. Ibuprofen" maxlength="60" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dose</label>
+        <input class="form-input" type="text" id="m-dose" placeholder="e.g. 200mg" maxlength="30" />
+      </div>
+      <button class="btn-add" onclick="addMed()">+ Add</button>
+    </div>
+
+    <div class="med-list" id="med-list">
+      <div class="empty-state">No medications logged yet</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const THEME_KEY = 'health-theme-v1';
+const WEIGHT_KEY = 'health-weight-v1';
+const MED_KEY = 'health-med-v1';
+
+let isLight = false;
+let weights = []; // [{date, weight}]
+let meds = [];    // [{id, date, name, dose}]
+let logOpen = true;
+
+function uid() { return '_' + Math.random().toString(36).slice(2) + Date.now(); }
+function esc(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── THEME ──
+function initTheme() {
+  isLight = localStorage.getItem(THEME_KEY) === 'light';
+  applyTheme();
+}
+function toggleTheme() {
+  isLight = !isLight;
+  localStorage.setItem(THEME_KEY, isLight ? 'light' : 'dark');
+  applyTheme();
+  drawChart();
+}
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
+  const track = document.getElementById('toggle-track');
+  const label = document.getElementById('theme-label');
+  track.classList.toggle('light-on', isLight);
+  label.textContent = isLight ? 'Light' : 'Dark';
+}
+
+// ── DATE HELPERS ──
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtDate(str) {
+  const [y,m,d] = str.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[parseInt(m)-1]} ${parseInt(d)}, ${y}`;
+}
+
+// ── WEIGHT ──
+function loadWeights() {
+  try { const r = localStorage.getItem(WEIGHT_KEY); if (r) weights = JSON.parse(r); } catch(e) {}
+  weights.sort((a,b) => a.date.localeCompare(b.date));
+  renderWeights();
+}
+function saveWeights() { localStorage.setItem(WEIGHT_KEY, JSON.stringify(weights)); }
+
+function addWeight() {
+  const date = document.getElementById('w-date').value;
+  const weight = parseFloat(document.getElementById('w-weight').value);
+  if (!date || isNaN(weight) || weight < 50 || weight > 700) {
+    alert('Please enter a valid date and weight (50–700 lbs).'); return;
+  }
+  const existing = weights.findIndex(w => w.date === date);
+  if (existing >= 0) {
+    if (!confirm('An entry for this date already exists. Replace it?')) return;
+    weights[existing].weight = weight;
+  } else {
+    weights.push({ date, weight });
+  }
+  weights.sort((a,b) => a.date.localeCompare(b.date));
+  saveWeights(); renderWeights();
+  document.getElementById('w-weight').value = '';
+}
+
+function deleteWeight(date) {
+  weights = weights.filter(w => w.date !== date);
+  saveWeights(); renderWeights();
+}
+
+function renderWeights() {
+  const log = document.getElementById('weight-log');
+  const empty = document.getElementById('graph-empty');
+  const stats = document.getElementById('graph-stats');
+  const rangeLabel = document.getElementById('weight-range-label');
+
+  if (weights.length === 0) {
+    log.innerHTML = '<div class="empty-state">No entries yet</div>';
+    empty.style.display = 'flex';
+    stats.style.display = 'none';
+    rangeLabel.textContent = 'No entries yet';
+    drawChart();
+    return;
+  }
+
+  empty.style.display = 'none';
+  stats.style.display = 'flex';
+
+  const first = weights[0], last = weights[weights.length-1];
+  const change = last.weight - first.weight;
+  const changeStr = (change > 0 ? '+' : '') + change.toFixed(1) + ' lbs';
+
+  document.getElementById('stat-current').textContent = last.weight.toFixed(1) + ' lbs';
+  document.getElementById('stat-start').textContent = first.weight.toFixed(1) + ' lbs';
+  const changeEl = document.getElementById('stat-change');
+  changeEl.textContent = changeStr;
+  changeEl.className = 'g-stat-val ' + (change > 0 ? 'up' : change < 0 ? 'down' : 'neutral');
+  document.getElementById('stat-entries').textContent = weights.length;
+  rangeLabel.textContent = `${fmtDate(first.date)} → ${fmtDate(last.date)}`;
+
+  // Log list (newest first)
+  const reversed = [...weights].reverse();
+  log.innerHTML = reversed.map((w, i) => {
+    const prev = reversed[i+1];
+    let changeBadge = '';
+    if (prev) {
+      const diff = w.weight - prev.weight;
+      const cls = diff > 0 ? 'up' : diff < 0 ? 'down' : 'same';
+      const sym = diff > 0 ? '▲' : diff < 0 ? '▼' : '—';
+      changeBadge = `<span class="we-change ${cls}">${sym} ${Math.abs(diff).toFixed(1)}</span>`;
+    }
+    return `<div class="weight-entry">
+      <span class="we-date">${fmtDate(w.date)}</span>
+      <span class="we-weight">${w.weight.toFixed(1)} lbs</span>
+      ${changeBadge}
+      <button class="we-del" onclick="deleteWeight('${w.date}')">×</button>
+    </div>`;
+  }).join('');
+
+  drawChart();
+}
+
+// ── CHART ──
+let chartAnimFrame = null;
+function drawChart() {
+  const canvas = document.getElementById('weightChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if (weights.length < 2) return;
+
+  const style = getComputedStyle(document.documentElement);
+  const colorLine = style.getPropertyValue('--graph-line').trim();
+  const colorFillTop = style.getPropertyValue('--graph-fill-top').trim();
+  const colorFillBot = style.getPropertyValue('--graph-fill-bot').trim();
+  const colorDot = style.getPropertyValue('--graph-dot').trim();
+  const colorGrid = style.getPropertyValue('--graph-grid').trim();
+  const colorMuted = style.getPropertyValue('--muted').trim();
+
+  const pad = { top: 16, right: 20, bottom: 36, left: 52 };
+  const gW = W - pad.left - pad.right;
+  const gH = H - pad.top - pad.bottom;
+
+  const vals = weights.map(w => w.weight);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV - minV || 1;
+  const padV = range * 0.15;
+  const lo = minV - padV, hi = maxV + padV;
+
+  const toX = i => pad.left + (i / (weights.length - 1)) * gW;
+  const toY = v => pad.top + (1 - (v - lo) / (hi - lo)) * gH;
+
+  // Grid lines
+  ctx.strokeStyle = colorGrid;
+  ctx.lineWidth = 1;
+  const gridCount = 4;
+  ctx.font = `500 10px Nunito, sans-serif`;
+  ctx.fillStyle = colorMuted;
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= gridCount; i++) {
+    const v = lo + (hi - lo) * (i / gridCount);
+    const y = toY(v);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    ctx.fillText(v.toFixed(1), pad.left - 6, y + 4);
+  }
+
+  // X labels
+  ctx.textAlign = 'center';
+  ctx.fillStyle = colorMuted;
+  const maxLabels = Math.min(weights.length, 6);
+  const step = Math.ceil(weights.length / maxLabels);
+  weights.forEach((w, i) => {
+    if (i % step !== 0 && i !== weights.length - 1) return;
+    const parts = w.date.split('-');
+    const label = `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(parts[1])-1]} ${parseInt(parts[2])}`;
+    ctx.fillText(label, toX(i), H - pad.bottom + 16);
+  });
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + gH);
+  grad.addColorStop(0, colorFillTop);
+  grad.addColorStop(1, colorFillBot);
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(weights[0].weight));
+  weights.forEach((w, i) => { if (i > 0) ctx.lineTo(toX(i), toY(w.weight)); });
+  ctx.lineTo(toX(weights.length-1), pad.top + gH);
+  ctx.lineTo(toX(0), pad.top + gH);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(weights[0].weight));
+  weights.forEach((w, i) => { if (i > 0) ctx.lineTo(toX(i), toY(w.weight)); });
+  ctx.strokeStyle = colorLine;
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Dots
+  weights.forEach((w, i) => {
+    const x = toX(i), y = toY(w.weight);
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = colorDot;
+    ctx.fill();
+    ctx.strokeStyle = isLight ? '#fff' : '#111827';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function toggleLog() {
+  logOpen = !logOpen;
+  document.getElementById('weight-log-wrap').classList.toggle('hidden', !logOpen);
+  document.getElementById('log-chevron').classList.toggle('collapsed', !logOpen);
+}
+
+// ── MEDS ──
+function loadMeds() {
+  try { const r = localStorage.getItem(MED_KEY); if (r) meds = JSON.parse(r); } catch(e) {}
+  renderMeds();
+}
+function saveMeds() { localStorage.setItem(MED_KEY, JSON.stringify(meds)); }
+
+function addMed() {
+  const date = document.getElementById('m-date').value;
+  const name = document.getElementById('m-name').value.trim();
+  const dose = document.getElementById('m-dose').value.trim();
+  if (!date || !name) { alert('Please enter at least a date and medication name.'); return; }
+  meds.unshift({ id: uid(), date, name, dose: dose || '—' });
+  saveMeds(); renderMeds();
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-dose').value = '';
+}
+
+function deleteMed(id) {
+  meds = meds.filter(m => m.id !== id);
+  saveMeds(); renderMeds();
+}
+
+function renderMeds() {
+  const list = document.getElementById('med-list');
+  const countLabel = document.getElementById('med-count-label');
+  if (meds.length === 0) {
+    list.innerHTML = '<div class="empty-state">No medications logged yet</div>';
+    countLabel.textContent = 'No medications logged';
+    return;
+  }
+  countLabel.textContent = `${meds.length} medication${meds.length !== 1 ? 's' : ''} logged`;
+  list.innerHTML = meds.map(m => `
+    <div class="med-item">
+      <div class="med-dot"></div>
+      <span class="med-name">${esc(m.name)}</span>
+      <span class="med-dose">${esc(m.dose)}</span>
+      <span class="med-date">${fmtDate(m.date)}</span>
+      <button class="med-del" onclick="deleteMed('${m.id}')">×</button>
+    </div>`).join('');
+}
+
+// ── INIT ──
+document.getElementById('date-line').textContent = new Date().toLocaleDateString('en-US', {
+  weekday:'long', year:'numeric', month:'long', day:'numeric'
+});
+document.getElementById('w-date').value = todayStr();
+document.getElementById('m-date').value = todayStr();
+
+window.addEventListener('resize', () => { if (weights.length >= 2) drawChart(); });
+
+initTheme();
+loadWeights();
+loadMeds();
+</script>
+</body>
+</html>
